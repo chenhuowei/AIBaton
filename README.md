@@ -135,6 +135,33 @@ AIBaton/
 
 ## 许可与来源
 
-前端源自 AionUi 2.2.2（Apache-2.0），后端为 AionCore v0.2.2 预编译二进制；
-lom-desktop 仅作为 Tauri 配置参考，未复制其 AGPL 代码。完整清单见
-[`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md)。代码文件保留上游版权头。
+Aibaton is a desktop application built from the following components. The
+user-visible product name is **Aibaton**; upstream copyright notices are
+retained in source file headers as required by Apache-2.0 §4.
+
+## 1. AionUi frontend (copied and adapted)
+
+- **Source**: <https://github.com/iOfficeAI/AionUi>, `main` branch, version **2.2.2**
+  (commit `e108b6b56` at the time of the one-shot copy)
+- **Used here**: `src/renderer/**`, `src/common/**` (with Tauri-specific patches),
+  `public/**`, `uno.config.ts`, i18n locale data (13 languages)
+- **License**: Apache-2.0 (see upstream `LICENSE`)
+- **Changes**: Electron-specific code removed; Tauri dialog / window / drag-drop
+  adapters added; default dark theme; brand strings replaced with "Aibaton";
+  PWA registration disabled; unused Electron IPC channels stubbed.
+- **Not removed**: `Copyright 2025 AionUi (aionui.com)` headers in source files.
+
+## 2. AionCore backend (binary, not compiled from source here)
+
+- **Source**: <https://github.com/iOfficeAI/AionCore>, release **v0.2.2**
+- **Used here**: prebuilt `aioncore-x86_64-pc-windows-msvc.exe` sidecar
+  (placed by `scripts/adopt-aioncore.mjs`; **not committed to git**)
+- **SHA-256 (exe)**: `67eb02774bab3855b759ec9756c2e540cd17b64b850407fa4b8bad07fd8a0892`
+- **SHA-256 (official release zip)**: `d1ed8d1da869230c18701747d07e8f068db5b8c9442e65261304aeb4c27eacf6`
+- **Download**: <https://github.com/iOfficeAI/AionCore/releases/download/v0.2.2/aioncore-v0.2.2-x86_64-pc-windows-msvc.zip>
+- **License**: upstream `LICENSE` states **Apache-2.0**; the root `Cargo.toml`
+  declares `license = "MIT"`. These are inconsistent upstream; both are recorded
+  here. Users should confirm with upstream before redistribution.
+- The source tree `../AionCore` is used **read-only** as an API/CLI reference.
+  No AionCore source is copied into this repository.
+

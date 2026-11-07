@@ -12,7 +12,7 @@ import classNames from 'classnames';
 import { useSettingsViewMode } from '../settingsViewContext';
 import { isElectronDesktop, openExternalUrl } from '@/renderer/utils/platform';
 import FeedbackReportModal from './FeedbackReportModal';
-import DataDirRow from './DataDirRow';
+import AibatonAbout from './AibatonAbout';
 import { ipcBridge } from '@/common';
 import { getIncludePrerelease, runUpdateCheck } from '@/renderer/components/settings/checkForUpdatesShared';
 import { UPDATE_AVAILABLE_EVENT } from '@/renderer/components/settings/useUpdateNotificationController';
@@ -148,83 +148,7 @@ const AboutModalContent: React.FC = () => {
         )}
       >
         <div className='flex flex-col max-w-500px mx-auto'>
-          {/* App Info Section */}
-          <div className='flex flex-col items-center pb-24px'>
-            <Typography.Title heading={3} className='text-24px font-bold text-t-primary mb-8px'>
-              Aibaton
-            </Typography.Title>
-            <Typography.Text className='text-14px text-t-secondary mb-12px text-center'>
-              {t('settings.appDescription')}
-            </Typography.Text>
-            <div className='flex items-center justify-center gap-8px mb-16px'>
-              <span className='px-10px py-4px rd-6px text-13px bg-fill-2 text-t-primary font-500'>
-                v{__APP_VERSION__}
-              </span>
-              <div
-                className='text-t-primary cursor-pointer hover:text-t-secondary transition-colors p-4px'
-                onClick={() =>
-                  openLink('https://github.com/iOfficeAI/AionUi').catch((error) =>
-                    console.error('Failed to open link:', error)
-                  )
-                }
-              >
-                <Github theme='outline' size='20' />
-              </div>
-            <DataDirRow />
-            </div>
-
-            {/* Check Update Section */}
-            {false && isElectron && (
-              <div className='flex flex-col items-center gap-12px w-full max-w-300px bg-fill-2 p-16px rounded-lg'>
-                <Button
-                  type='primary'
-                  long
-                  loading={checking || updateReadyState.preparing}
-                  disabled={updateReadyState.preparing}
-                  onClick={() => void checkUpdate()}
-                >
-                  {updateReadyState.preparing
-                    ? t('update.preparingInstall')
-                    : updateReadyState.ready
-                      ? t('settings.updateReadyInstall', { version: updateReadyState.version })
-                      : checking
-                        ? t('settings.checkingForUpdates')
-                        : t('settings.checkForUpdates')}
-                </Button>
-                <div className='flex items-center justify-between w-full'>
-                  <Typography.Text className='text-12px text-t-secondary'>
-                    {t('settings.includePrereleaseUpdates')}
-                  </Typography.Text>
-                  <Switch size='small' checked={includePrerelease} onChange={handlePrereleaseChange} />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Divider */}
-          <Divider className='my-16px' />
-
-          {/* Links Section */}
-          <div className='flex flex-col gap-4px pt-8px'>
-            {linkItems.map((item, index) => (
-              <div
-                key={index}
-                className='flex items-center justify-between px-16px py-12px rd-8px hover:bg-fill-2 transition-all cursor-pointer group'
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if ('url' in item) {
-                    openLink(item.url).catch((error) => console.error('Failed to open link:', error));
-                  } else {
-                    item.onClick();
-                  }
-                }}
-              >
-                <Typography.Text className='text-14px text-t-primary'>{item.title}</Typography.Text>
-                <div className='text-t-secondary group-hover:text-t-primary transition-colors'>{item.icon}</div>
-              </div>
-            ))}
-          </div>
+          <AibatonAbout />
         </div>
       </div>
       <FeedbackReportModal visible={showFeedbackModal} onCancel={() => setShowFeedbackModal(false)} />

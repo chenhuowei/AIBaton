@@ -103,3 +103,14 @@ src-tauri/target/release/bundle/nsis/Aibaton_0.2.2_x64-setup.exe   34.39 MiB
 
 `scripts/sync-frontend.mjs` 现在共 **26 处补丁**，`scripts/rebrand.mjs` 处理 138 文件；
 `npm run sync:frontend` 会串起两者，可重复执行。
+
+## 追加：界面物料统一（2026-11-07）
+
+| 需求 | 实现 |
+|---|---|
+| 界面内图标仍是上游 | 侧栏硬编码 SVG 换成 `brand/app.png`；内置 Aion CLI 的 `/api/assets/logos/brand/aion.svg` 在 `assistantAvatar.ts`（preset pill 统一入口）与 `agentLogo.ts`（SWR logo map）两处都覆盖为 Aibaton 品牌图。CDP 实测 `aion.svg` 出现次数 0、`brand/app.png` 2 次 |
+| 顶部两个操作栏 | 移除最外层 `.app-titlebar`（`Layout.tsx` 不再渲染 `<Titlebar />`），保留侧栏 header 并换成 `overlays/.../SidebarHeader.tsx`：品牌图 + 名称 + 侧栏切换 + 原生窗口控制。CDP 实测 `barCount = 1`、`.app-window-controls` 仍存在。随外层栏移除的还有搜索/历史导航/反馈/工作区按钮（本期只保留桌面必需能力） |
+| 关于页物料 | `overlays/.../AibatonAbout.tsx` 替换整个 App Info + Divider + Links 区块：品牌图、描述、`v2.2.2`、GitHub `chenhuowei/AIBaton`、数据目录（复制/打开）、Apache-2.0 与上游组件声明。上游 wiki / releases / aionui.com / Twitter 链接全部移除 |
+
+`AboutModalContent.tsx` 里保留了少量不再使用的变量（`linkItems`、`checking` 等），
+因 `tsconfig` 未启用 `noUnusedLocals` 且 Vite tree-shake 会移除，不影响运行。

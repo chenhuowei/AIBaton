@@ -5,6 +5,7 @@
  */
 
 import { resolveBackendAssetUrl } from '@/renderer/utils/platform';
+import aibatonLogo from '@renderer/assets/logos/brand/app.png';
 
 export type AssistantAvatar =
   | { kind: 'image'; value: string }
@@ -35,6 +36,11 @@ export function resolveAssistantAvatar(avatar: string | undefined): AssistantAva
     return { kind: 'fallback' };
   }
 
+  // Upstream embeds `/api/assets/logos/brand/aion.svg` for the built-in
+  // Aion CLI agent. Use the Aibaton brand mark everywhere it appears.
+  if (value.includes('/logos/brand/aion.svg')) {
+    return { kind: 'image', value: aibatonLogo };
+  }
   const resolved = resolveBackendAssetUrl(value) ?? value;
   const isImage = /\.(svg|png|jpe?g|webp|gif)$/i.test(resolved) || /^(https?:|data:|\/)/i.test(resolved);
   if (isImage) {

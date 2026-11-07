@@ -27,6 +27,7 @@ import {
 } from '@/renderer/utils/model/assistantAvatar';
 import type { ManagedAgent } from '@/renderer/utils/model/agentTypes';
 import { resolveBackendAssetUrl } from '@/renderer/utils/platform';
+import aibatonLogo from '@renderer/assets/logos/brand/app.png';
 import useSWR from 'swr';
 
 /** Map of lowercased backend id -> logo URL. */
@@ -47,7 +48,7 @@ export async function fetchAgentLogos(): Promise<AgentLogoMap> {
   try {
     const agents = await ipcBridge.acpConversation.getManagedAgents.invoke();
     if (Array.isArray(agents)) {
-      const map: AgentLogoMap = {};
+      const map: AgentLogoMap = { aionrs: aibatonLogo };
       for (const agent of agents as ManagedAgent[]) {
         const logo = agent.avatar || agent.icon;
         if (!logo) continue;
