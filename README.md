@@ -123,6 +123,10 @@ AIBaton/
 按主题记录：落地方案、环境、实现状态、二进制策略、品牌化、图标、登录修复、
 原生能力、Node 运行时目录、审计清单、待决策记录。
 
+### 启动画面
+
+`public/boot-splash.css` 由 `index.html` 在首帧引用，在 8 MB 前端 bundle 解析前显示深蓝科技感加载动画（透视网格、脉冲环、轨道节点、扫描线、进度条）；React 挂载后由 `src/renderer/tauri/bootstrap.ts` 淡出移除。
+
 ### `public/` — 静态资源
 
 `pwa/` 为页面图标，`pet-states/` 为桌宠动画素材，`manifest.webmanifest` 与 `sw.js`

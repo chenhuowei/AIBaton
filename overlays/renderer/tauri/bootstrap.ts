@@ -42,6 +42,14 @@ function ensureDesktopMarkers(): void {
   if (w.__backendStartupFailure === undefined) w.__backendStartupFailure = null;
 }
 
+/** Fade out and remove the inline boot splash once React is mounted. */
+function removeBootSplash(): void {
+  const el = document.getElementById('aibaton-boot');
+  if (!el) return;
+  el.classList.add('is-leaving');
+  window.setTimeout(() => el.remove(), 400);
+}
+
 function showFatal(message: string): void {
   const root = document.getElementById('root');
   if (!root) return;
@@ -64,6 +72,7 @@ export async function bootstrapTauri(mount: () => void): Promise<void> {
   if (!isTauri()) {
     markBackendReady('');
     mount();
+    removeBootSplash();
     return;
   }
 
@@ -82,4 +91,5 @@ export async function bootstrapTauri(mount: () => void): Promise<void> {
   }
 
   mount();
+  removeBootSplash();
 }

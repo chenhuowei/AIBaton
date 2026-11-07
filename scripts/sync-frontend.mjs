@@ -96,11 +96,23 @@ patch('renderer/index.html', (s) => {
     '      })();',
     '    </script>',
   ].join('\n');
-  return s.replace('<head>', `<head>\n${inline}`).replace(
-    '<html data-theme="light"',
-    '<html data-theme="dark"'
-  );
-}, 'synchronous desktop markers + dark default in <head>');
+  const splashLink = '    <link rel="stylesheet" href="./boot-splash.css" />';
+  const splashHtml = [
+    '    <div id="aibaton-boot" role="status" aria-label="Starting Aibaton">',
+    '      <div class="grid"></div><div class="scan"></div>',
+    '      <div class="core">',
+    '        <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>',
+    '        <div class="orbit"><span class="dot"></span></div><div class="mark"></div>',
+    '      </div>',
+    '      <div class="label"><b>AI</b>BATON</div>',
+    '      <div class="sub">INITIALIZING WORKSPACE</div>',
+    '      <div class="bar"><i></i></div>',
+    '    </div>',
+  ].join('\n');
+  let out = s.replace('<head>', `<head>\n${inline}\n${splashLink}`);
+  out = out.replace('<div id="root"></div>', `${splashHtml}\n    <div id="root"></div>`);
+  return out.replace('<html data-theme="light"', '<html data-theme="dark"');
+}, 'synchronous markers + dark default + boot splash in <head>');
 
 // 2a. main.tsx (2.2.2): remove both Electron Sentry dynamic imports and gate
 //     the final root.render() behind the Tauri endpoint handshake.
@@ -471,7 +483,10 @@ const OVERLAYS = join(ROOT, 'overlays');
 if (existsSync(OVERLAYS)) {
   cpSync(join(OVERLAYS, 'common'), join(SRC, 'common'), { recursive: true });
   cpSync(join(OVERLAYS, 'renderer'), join(SRC, 'renderer'), { recursive: true });
-  patched.push('overlays/** — endpointGate + platform shim + tauri/bootstrap + types.d.ts');
+  if (existsSync(join(OVERLAYS, 'public'))) {
+    cpSync(join(OVERLAYS, 'public'), join(ROOT, 'public'), { recursive: true });
+  }
+  patched.push('overlays/** — endpointGate + platform shim + tauri/bootstrap + boot-splash.css + types.d.ts');
 }
 
 console.log(`\n[sync-frontend] patched ${patched.length} items:`);

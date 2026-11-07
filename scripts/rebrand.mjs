@@ -140,9 +140,6 @@ rewrite(
         [
           '<SidebarHeader',
           '            collapsed={collapsed}',
-          '            onToggle={toggleSider}',
-          '            isMac={false}',
-          '            isMobile={isMobile}',
           '            onBrandClick={handleBrandHome}',
           "            backLabel={t('common.back', { defaultValue: 'Back to Chat' })}",
           '            showBack={isSettingsRoute}',

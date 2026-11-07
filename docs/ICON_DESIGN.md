@@ -78,3 +78,19 @@ $bmp = $ico.ToBitmap(); $bmp.Save('icon-check.png', [System.Drawing.Imaging.Imag
 另外：改了图标后**必须** `cargo clean -p aibaton` 再 `tauri build`——
 `tauri-build` 的 `rerun-if-changed` 只监听 `tauri.conf.json` / `capabilities` /
 `externalBin`，不监听 ico 文件，增量编译不会重嵌资源。
+
+## v2 — 参考用户提供的设计图重做（2026-11-07）
+
+用户给出 `AI多CLI集成应用图标设计.png`（1536×1536）。当前模型不支持读图，
+改用程序解析像素：主导色深蓝（`~32,32,64 → 32,48,96`）、上半部青白 `>` 与 `/`
+CLI 尖角、中央终端面板、一条从左上到右下的亮斜线、底部暖橙/青色点缀。
+
+`scripts/generate-icons.mjs` 已重写为 v2，解析式重绘：
+
+- 深蓝圆角底 + 透视网格感渐变
+- 终端卡片（标题栏 + 三色圆点）
+- 卡片内 `>` 与 `/` CLI 符号 + 光标块
+- 贯穿全图的青蓝渐变指挥棒（baton）+ 左上 AI 光点 + 右下暖橙端点
+- 外围协作轨道弧
+
+仍为零依赖 Node 生成 PNG + 7 帧 ICO。CDP 与 `ExtractAssociatedIcon` 均验证生效。
