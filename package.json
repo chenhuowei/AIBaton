@@ -1,11 +1,11 @@
 {
   "name": "aibaton",
   "private": true,
-  "version": "0.2.2",
+  "version": "1.0.0",
   "description": "Aibaton — AI agent workspace (Tauri 2 + AionCore v0.2.2 backend)",
   "type": "module",
   "scripts": {
-    "sync:frontend": "node scripts/sync-frontend.mjs && node scripts/rebrand.mjs && node scripts/generate-icons.mjs",
+    "sync:frontend": "node scripts/sync-frontend.mjs && node scripts/rebrand.mjs",
     "adopt:core": "node scripts/adopt-aioncore.mjs",
     "check:env": "node scripts/check-env.mjs",
     "dev": "vite",
@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "preview": "node scripts/preview.mjs",
     "tauri": "tauri",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "prepare:node": "node scripts/prepare-node-runtime.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",

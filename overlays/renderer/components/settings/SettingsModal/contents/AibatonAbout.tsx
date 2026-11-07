@@ -79,13 +79,13 @@ export const AibatonAbout: React.FC = () => {
             </Button>
           </div>
           <Typography.Text className='text-11px text-t-tertiary'>
-            Chat history, settings, logs and the downloaded Node.js runtime are stored here.
+            Chat history, settings, logs and the activated Node.js runtime are stored here.
           </Typography.Text>
         </div>
       )}
 
       <Typography.Text className='text-11px text-t-tertiary text-center mt-8px'>
-        Built on AionUi 2.2.2 (Apache-2.0) and AionCore v0.2.2. See THIRD-PARTY-NOTICES.md.
+        Based on upstream frontend 2.2.2 (Apache-2.0) and AionCore v0.2.2. Node.js 24.11.0 is bundled.
       </Typography.Text>
     </div>
   );

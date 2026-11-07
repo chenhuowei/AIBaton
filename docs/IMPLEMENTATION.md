@@ -189,3 +189,18 @@ artifact，产出一个 8.1 MB 的 exe（正常 release 约 19.8 MB），把 dev
 > 不要手动 `cargo build --release` 作为前置步骤。若怀疑产物异常，
 > 先清 `aibaton-*` 构建目录再重打。判断是否正常：exe ≈ 19.8 MB，
 > CDP 页面 URL 必须是 `http://tauri.localhost/`。
+
+## 追加：v1.0.0 / 图标一致性 / Node 内置（2026-11-07）
+
+| 需求 | 实现 |
+|---|---|
+| 侧栏「新会话」上方仍是 AionUi 图标 | 根因：多次直接运行 `node scripts/sync-frontend.mjs`（未走 npm 脚本）会用上游 `../AionUi` 资源覆盖 `brand/app.png`，而图标生成原本只串在 `npm run sync:frontend` 里。已把 `generate-icons.mjs` 的调用**内建到 sync-frontend.mjs 末尾**，无论怎么跑同步都会重生成 Aibaton v2 图标。实测 `brand/app.png` 与 `icons/icon.png` 哈希一致 |
+| 版本统一 v1.0.0 | `package.json` / `src-tauri/Cargo.toml` / `tauri.conf.json` 全部改为 `1.0.0`；`vite.config.ts` 的 `__APP_VERSION__` 改为读**本工程** package.json（原来错误地读上游 AionUi 的 2.2.2）。实测启动参数 `--app-version 1.0.0`、关于页 `v1.0.0` |
+| Node.js 随包自带 | 新增 `scripts/prepare-node-runtime.mjs`：把 Node.js 24.11.0（win-x64，约 104 MB）从已安装 AionUi 的 `managed-resources/`（或数据目录已下载副本）stage 到 `src-tauri/binaries/managed-resources/`；`tauri.conf.json` 加 `bundle.resources` 映射；Rust 壳检测到 `manifest.json` 自动传 `--managed-resources-mode bundled`（原有逻辑）。该目录不入库（`.gitignore`），打包前需 `npm run prepare:node` |
+
+硬证据：删除数据目录里已激活的 Node 后重启，后端日志为
+`managed node runtime activated from local resources` / `source: "bundled"`，
+**无 download / nodejs.org 记录**。
+
+安装包：`Aibaton_1.0.0_x64-setup.exe` 57.73 MiB、
+`Aibaton_1.0.0_x64-en-US.msi` 83.47 MiB（含 104 MB Node，压缩后净增约 23 MB）。

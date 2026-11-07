@@ -1,6 +1,6 @@
 [package]
 name = "aibaton"
-version = "0.2.2"
+version = "1.0.0"
 description = "Aibaton desktop shell (Tauri 2 + AionCore v0.2.2 backend)"
 edition = "2021"
 license = "Apache-2.0"

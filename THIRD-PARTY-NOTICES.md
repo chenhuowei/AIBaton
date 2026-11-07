@@ -44,8 +44,15 @@ retained in source file headers as required by Apache-2.0 §4.
 - Frontend: see `package.json` / `package-lock.json` (npm registry packages).
 - Rust shell: see `src-tauri/Cargo.toml` / `src-tauri/Cargo.lock`
   (Tauri 2, tauri-plugin-dialog, tauri-plugin-opener, etc.).
-- Node.js runtime downloaded by AionCore at first launch (if not already
-  present) comes from nodejs.org and is **not redistributed** in the installer.
+- **Bundled Node.js runtime**: Node.js v24.11.0 (win-x64, `node.exe` + npm/npx),
+  staged by `scripts/prepare-node-runtime.mjs` into
+  `src-tauri/binaries/managed-resources/` and shipped via `bundle.resources`.
+  It originates from the same Node.js distribution AionCore downloads
+  (<https://nodejs.org/dist/v24.11.0/node-v24.11.0-win-x64.zip>), Node.js
+  license (MIT). The ~104 MB directory is **not committed to git**; re-run
+  `npm run prepare:node` before packaging. At first launch AionCore activates
+  it into the app data dir with `--managed-resources-mode bundled`, so no
+  network download is needed.
 
 ## 5. Brand assets
 
@@ -58,3 +65,7 @@ All icons in `src-tauri/icons/**`, `public/pwa/**` and
 The remote repository ships an Apache-2.0 `LICENSE`. Newly written glue code
 (scripts, Tauri shell, overlays, docs) is provided under the same license unless
 a file header states otherwise.
+
+Current product version: **v1.0.0** (`package.json`, `src-tauri/Cargo.toml`,
+`src-tauri/tauri.conf.json`). This is the Aibaton product version; the upstream
+AionUi frontend (2.2.2) and AionCore backend (v0.2.2) keep their own versions.

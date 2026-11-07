@@ -489,6 +489,17 @@ if (existsSync(OVERLAYS)) {
   patched.push('overlays/** — endpointGate + platform shim + tauri/bootstrap + boot-splash.css + types.d.ts');
 }
 
+// 4. Always regenerate the Aibaton icons LAST. sync-frontend copies
+//      ../AionUi/public (and its renderer assets) over ours, so running this
+//      script directly would otherwise restore upstream artwork.
+try {
+  const { execFileSync } = await import('node:child_process');
+  execFileSync(process.execPath, [join(ROOT, 'scripts', 'generate-icons.mjs')], { stdio: 'inherit' });
+  patched.push('icons — regenerated from scripts/generate-icons.mjs');
+} catch (error) {
+  console.error('[sync-frontend] icon generation failed:', error);
+}
+
 console.log(`\n[sync-frontend] patched ${patched.length} items:`);
 for (const p of patched) console.log(`  ✓ ${p}`);
 if (skipped.length) {

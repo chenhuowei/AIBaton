@@ -35,7 +35,7 @@ AIBaton/
 │   └── Cargo.toml / Cargo.lock / build.rs
 │
 ├── public/                  静态资源：PWA 图标、Web App Manifest、桌宠动画
-├── scripts/                 工程脚本：前端同步、品牌替换、图标生成、后端成品接纳、环境自检、本地预览
+├── scripts/                 工程脚本：前端同步、品牌替换、图标生成、后端成品接纳、Node 运行时准备、环境自检、本地预览
 ├── docs/                    设计与实现记录文档
 │
 ├── package.json / package-lock.json      前端依赖与命令
@@ -91,6 +91,7 @@ AIBaton/
 | `icons/` | 窗口/任务栏/安装包/页面 favicon 使用的品牌图标 |
 | `nsis/` | 卸载时「删除应用数据」的显眼文案与二次确认 |
 | `binaries/checksums.json` | 记录所接纳后端成品的版本、SHA256、来源，便于复现 |
+| `binaries/managed-resources/` | 随包分发的 Node.js 24.11.0（由 `prepare:node` 生成，约 104 MB，不入库） |
 
 ### `overlays/` — 为什么单独存在
 
@@ -111,10 +112,11 @@ AIBaton/
 
 | 脚本 | 作用 |
 |---|---|
-| `sync-frontend.mjs` | 从 `../AionUi` 全量同步前端并应用 Tauri 补丁 |
+| `sync-frontend.mjs` | 从 `../AionUi` 全量同步前端并应用 Tauri 补丁，末尾自动重生成 Aibaton 图标 |
 | `rebrand.mjs` | 把用户可见文案/品牌替换为 Aibaton（保留上游版权头） |
 | `generate-icons.mjs` | 生成全套品牌图标（PNG + 7 帧 ICO，零外部依赖） |
 | `adopt-aioncore.mjs` | 接纳本地提供的 `aioncore.exe`：校验哈希、冒烟、按平台改名 |
+| `prepare-node-runtime.mjs` | 准备随包分发的 Node.js 24.11.0 运行时（`managed-resources/`） |
 | `check-env.mjs` | 检查 Node / Rust / MSVC / WebView2 / 网络 / 磁盘环境 |
 | `preview.mjs` | 不依赖 Rust 工具链的本地联调预览（起后端 + 静态服务 + 反代） |
 
@@ -134,8 +136,9 @@ AIBaton/
 
 ## 运行时数据位置
 
-后端把数据库、日志、工作区以及按需下载的 Node.js 运行时放在
-`%APPDATA%\com.aibaton.desktop\`。关于页会显示该路径并提供一键打开。
+后端把数据库、日志、工作区放在 `%APPDATA%\com.aibaton.desktop\`。
+Node.js 24.11.0 随应用分发（`managed-resources/`），首次启动由后端激活到数据目录，
+不再从 nodejs.org 下载。关于页会显示该路径并提供一键打开。
 
 ## 许可与来源
 

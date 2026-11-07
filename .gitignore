@@ -9,9 +9,10 @@ src-tauri/gen/schemas/
 dist/
 out/
 
-# Bundled backend binary (large, fetched by scripts/adopt-aioncore.mjs)
+# Bundled backend binary + Node runtime (large, prepared by scripts)
 src-tauri/binaries/aioncore-*.exe
 src-tauri/binaries/aioncore-*
+src-tauri/binaries/managed-resources/
 !src-tauri/binaries/.gitkeep
 !src-tauri/binaries/checksums.json
 

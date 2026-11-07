@@ -4,10 +4,10 @@ import UnoCSS from 'unocss/vite';
 import { resolve } from 'node:path';
 
 const ROOT = resolve(import.meta.dirname ?? process.cwd(), '.');
-const upstream = resolve(ROOT, '..', 'AionUi', 'package.json');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import { readFileSync } from 'node:fs';
-const upstreamVersion = JSON.parse(readFileSync(upstream, 'utf8')).version as string;
+// Product version of THIS application (not the upstream AionUi frontend).
+const appVersion = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf8')).version as string;
 
 export default defineConfig({
   root: resolve(ROOT, 'src/renderer'),
@@ -40,7 +40,7 @@ export default defineConfig({
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV ?? 'production'),
     'process.env.AIONUI_MULTI_INSTANCE': JSON.stringify(process.env.AIONUI_MULTI_INSTANCE ?? ''),
     'process.env.SENTRY_DSN': JSON.stringify(process.env.SENTRY_DSN ?? ''),
-    __APP_VERSION__: JSON.stringify(upstreamVersion),
+    __APP_VERSION__: JSON.stringify(appVersion),
     __IS_DISCONTINUED_BUILD__: JSON.stringify(false),
     global: 'globalThis',
   },
