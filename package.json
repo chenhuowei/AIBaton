@@ -5,7 +5,7 @@
   "description": "Aibaton — AI agent workspace (Tauri 2 + AionCore v0.2.2 backend)",
   "type": "module",
   "scripts": {
-    "sync:frontend": "node scripts/sync-frontend.mjs && node scripts/rebrand.mjs",
+    "sync:frontend": "node scripts/sync-frontend.mjs && node scripts/rebrand.mjs && node scripts/generate-icons.mjs",
     "adopt:core": "node scripts/adopt-aioncore.mjs",
     "check:env": "node scripts/check-env.mjs",
     "dev": "vite",
