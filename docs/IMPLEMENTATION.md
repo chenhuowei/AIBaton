@@ -169,3 +169,23 @@ HTTP 契约与退出清理。
 
 **已确认不做**：不引入 `managed-resources/`（保持默认 `download` 模式，安装包维持 34/47 MiB）。
 登录保持默认免登录（未加开关），Node.js 策略「按现状保持」，均按用户决定未改动。
+
+## 构建纪律（2026-11-07 事故记录）
+
+现象：某次启动报「嗯… 无法访问此页面 / 127.0.0.1 拒绝连接」。
+CDP 抓到页面 URL 是 `http://127.0.0.1:1420/`（Vite devUrl），而不是
+`http://tauri.localhost/`。
+
+根因：排查图标时反复手动执行 `cargo build --release`（脱离 Tauri CLI 的
+`beforeBuildCommand` / 配置注入），加上 crate 从 `aionui-rust` 改名为
+`aibaton` 后 `target/` 残留多套构建产物，增量编译复用了带 `cfg(dev)` 的
+artifact，产出一个 8.1 MB 的 exe（正常 release 约 19.8 MB），把 devUrl
+当作运行时入口。
+
+修复：删除 `src-tauri/target/release/build/aibaton-*`、
+`.fingerprint/aibaton-*`、旧 exe，**只执行 `npm run tauri -- build`**。
+
+> 规则：修改图标/前端/配置后，一律用 `npm run tauri -- build`；
+> 不要手动 `cargo build --release` 作为前置步骤。若怀疑产物异常，
+> 先清 `aibaton-*` 构建目录再重打。判断是否正常：exe ≈ 19.8 MB，
+> CDP 页面 URL 必须是 `http://tauri.localhost/`。
