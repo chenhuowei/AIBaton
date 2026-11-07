@@ -94,3 +94,33 @@ CLI 尖角、中央终端面板、一条从左上到右下的亮斜线、底部�
 - 外围协作轨道弧
 
 仍为零依赖 Node 生成 PNG + 7 帧 ICO。CDP 与 `ExtractAssociatedIcon` 均验证生效。
+
+## 图标不生效的根因与固化（2026-11-07 二次修复）
+
+现象：换到 v2 图标后，任务栏 / 窗口仍显示 v1。`src-tauri/icons/icon.ico`
+和 `target/release/resources/icon.ico` 哈希都是新的，但 **exe 内的 Windows
+RT_ICON 资源仍是旧的**。
+
+原因：`tauri-build` 的 build script 只发
+`rerun-if-changed` 给 `tauri.conf.json` / `capabilities` / `externalBin`，
+**不监听图标文件**。仅替换图片内容而不改配置时，增量编译不会重嵌资源。
+
+修复：`src-tauri/build.rs` 显式加上
+
+```rust
+println!("cargo:rerun-if-changed=icons/icon.ico");
+println!("cargo:rerun-if-changed=icons/icon.png");
+println!("cargo:rerun-if-changed=icons/32x32.png");
+```
+
+之后 `touch icons/icon.ico` 即会触发 build script 重跑。
+
+验证方式（从 exe 提取真实图标，而不是只看 ico 文件）：
+
+```powershell
+Add-Type -AssemblyName System.Drawing
+$i = [System.Drawing.Icon]::ExtractAssociatedIcon((Resolve-Path 'src-tauri/target/release/aibaton.exe').Path)
+```
+
+修复后 32×32 中心 `[147,214,248]`、斜向 `[149,199,253]`，与 v2 ICO 一致
+（修复前是 v1 的 `[114,198,232]`）。
