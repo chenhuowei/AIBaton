@@ -1,0 +1,62 @@
+<!doctype html>
+<html data-theme="dark" data-color-scheme="default">
+  <head>
+    <script>
+      // Tauri desktop markers. Must be synchronous and BEFORE the module script:
+      // upstream modules evaluate these at import time.
+      (function () {
+        if (!window.electronAPI) window.electronAPI = { emit: function(){}, on: function(){} };
+        if (!window.__backendStartupBridge) {
+          window.__backendStartupBridge = {
+            getState: function(){ return null; },
+            subscribe: function(){ return function(){}; },
+          };
+        }
+        if (window.__backendStartupFailure === undefined) window.__backendStartupFailure = null;
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="application-name" content="Aibaton" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Aibaton" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#4E5969" />
+    <link rel="icon" type="image/png" href="./pwa/icon-192.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./pwa/icon-180.png" />
+    <title>Aibaton</title>
+    <script>
+      // Synchronously restore theme appearance from localStorage to prevent theme flash
+      (function () {
+        try {
+          var theme = localStorage.getItem('__aionui_theme') || 'dark';
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {}
+      })();
+    </script>
+    <style>
+      html,
+      body,
+      #root {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      // Set arco-theme on body synchronously
+      try {
+        var t = localStorage.getItem('__aionui_theme') || 'dark';
+        document.body.setAttribute('arco-theme', t);
+      } catch (e) {}
+    </script>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>

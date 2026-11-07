@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Aibaton",
+  "mainBinaryName": "aibaton",
+  "version": "0.2.2",
+  "identifier": "com.aibaton.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Aibaton",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 880,
+        "minHeight": 600,
+        "dragDropEnabled": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "Productivity",
+    "shortDescription": "Aibaton — AI agent workspace",
+    "externalBin": ["binaries/aioncore"],
+    "icon": ["icons/icon.ico", "icons/icon.png"],
+    "windows": {
+      "nsis": {
+        "languages": ["English"],
+        "customLanguageFiles": {
+          "English": "nsis/English.nsh"
+        },
+        "installerHooks": "nsis/hooks.nsh"
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "version": "v0.2.2",
+  "sourceType": "official-release-verified",
+  "suppliedFrom": "D:\\workspace\\rea\\aionui\\aioncore-v0.2.2-x86_64-pc-windows-msvc",
+  "hostTriple": "x86_64-pc-windows-msvc",
+  "exeSha256": "67eb02774bab3855b759ec9756c2e540cd17b64b850407fa4b8bad07fd8a0892",
+  "zipSha256": null,
+  "officialRelease": {
+    "zip": "d1ed8d1da869230c18701747d07e8f068db5b8c9442e65261304aeb4c27eacf6",
+    "exe": "67eb02774bab3855b759ec9756c2e540cd17b64b850407fa4b8bad07fd8a0892"
+  },
+  "smokeTested": true,
+  "installedAt": "2026-11-06T17:47:53.752Z"
+}
