@@ -56,3 +56,25 @@ npm run tauri -- build  # 图标是编译期资源，改图后必须重新打包
 - release 重新打包成功，`Aibaton_0.2.2_x64-setup.exe` 34.47 MiB /
   `Aibaton_0.2.2_x64_en-US.msi` 47.55 MiB
 - CDP 实测：页面 `title=Aibaton`、favicon `./pwa/icon-192.png`、`theme=dark`、无登录页
+
+## 已知陷阱（2026-11-07 修复）
+
+`tauri.conf.json` 的 `bundle.icon` **只能列 `icons/icon.ico`**，不要同时列
+`icons/icon.png`。同时列两项时，Tauri 在 Windows 上会走 PNG 那一路，把窗口资源
+编成 PNG-compressed ICO；`ExtractAssociatedIcon` / 任务栏 / 资源管理器无法正确解析，
+会回退显示 Tauri 内置默认（黑灰）图标。
+
+验证方法（PowerShell 从 exe 提取真实图标）：
+
+```powershell
+Add-Type -AssemblyName System.Drawing
+$ico = [System.Drawing.Icon]::ExtractAssociatedIcon((Resolve-Path 'src-tauri/target/release/aibaton.exe').Path)
+$bmp = $ico.ToBitmap(); $bmp.Save('icon-check.png', [System.Drawing.Imaging.ImageFormat]::Png)
+```
+
+修复后采样点：中心 `[114,198,232]`、AI 节点 `[192,242,238]`、棒尾 `[139,235,222]`，
+与 PNG 源一致。修复前是 `[0,0,0]` / `[165,165,165]`（旧默认图标）。
+
+另外：改了图标后**必须** `cargo clean -p aibaton` 再 `tauri build`——
+`tauri-build` 的 `rerun-if-changed` 只监听 `tauri.conf.json` / `capabilities` /
+`externalBin`，不监听 ico 文件，增量编译不会重嵌资源。

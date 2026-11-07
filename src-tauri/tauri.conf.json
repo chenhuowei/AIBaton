@@ -32,7 +32,7 @@
     "category": "Productivity",
     "shortDescription": "Aibaton — AI agent workspace",
     "externalBin": ["binaries/aioncore"],
-    "icon": ["icons/icon.ico", "icons/icon.png"],
+    "icon": ["icons/icon.ico"],
     "windows": {
       "nsis": {
         "languages": ["English"],
