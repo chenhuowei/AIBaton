@@ -22,7 +22,16 @@ use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+
+/// Directory overrides persisted by the system settings page.
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SystemInfoConfig {
+    pub cache_dir: Option<String>,
+    pub work_dir: Option<String>,
+    pub log_dir: Option<String>,
+}
 
 const BINARY_BASE: &str = "aioncore";
 
@@ -140,11 +149,21 @@ fn ensure_dir(p: &Path) -> Result<(), SidecarError> {
 }
 
 /// Start aioncore and wait until `/health` returns 200 (30 s deadline).
-pub fn start(data_dir: &Path, app_version: &str) -> Result<Sidecar, SidecarError> {
+pub fn start(data_dir: &Path, app_version: &str, system_info: &SystemInfoConfig) -> Result<Sidecar, SidecarError> {
     let bin = core_binary()?;
     let port = free_port()?;
-    let work_dir = data_dir.join("work");
-    let log_dir = data_dir.join("logs");
+    let work_dir = system_info
+        .work_dir
+        .as_ref()
+        .filter(|s| !s.is_empty())
+        .map(PathBuf::from)
+        .unwrap_or_else(|| data_dir.join("work"));
+    let log_dir = system_info
+        .log_dir
+        .as_ref()
+        .filter(|s| !s.is_empty())
+        .map(PathBuf::from)
+        .unwrap_or_else(|| data_dir.join("logs"));
     for d in [data_dir, &work_dir, &log_dir] {
         ensure_dir(d)?;
     }
@@ -153,6 +172,13 @@ pub fn start(data_dir: &Path, app_version: &str) -> Result<Sidecar, SidecarError
     let managed_ready = managed_dir.as_ref().is_some_and(|p| p.join("manifest.json").exists());
 
     let mut command = Command::new(&bin);
+    // `/api/system/info` reports work/log directories from the AIONUI_*
+    // environment variables (the CLI flags only control where the backend
+    // actually writes). Mirror the effective paths into the child environment
+    // so the settings page shows the persisted values after a restart instead
+    // of silently reverting to the built-in defaults.
+    command.env("AIONUI_WORK_DIR", &work_dir);
+    command.env("AIONUI_LOG_DIR", &log_dir);
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;

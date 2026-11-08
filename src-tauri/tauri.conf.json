@@ -4,6 +4,13 @@
   "mainBinaryName": "aibaton",
   "version": "1.0.0",
   "identifier": "com.aibaton.desktop",
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["aionui", "aibaton"]
+      }
+    }
+  },
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://127.0.0.1:1420",
@@ -23,7 +30,17 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": {
+        "default-src": "'self'",
+        "script-src": "'self'",
+        "style-src": "'self' 'unsafe-inline'",
+        "connect-src": "'self' http://127.0.0.1:* ws://127.0.0.1:*",
+        "img-src": "'self' data: blob: http://127.0.0.1:*",
+        "font-src": "'self' data:",
+        "media-src": "'self' blob: http://127.0.0.1:*",
+        "object-src": "'none'",
+        "frame-src": "'self' blob:"
+      }
     }
   },
   "bundle": {

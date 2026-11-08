@@ -29,11 +29,27 @@ export default defineConfig({
     outDir: resolve(ROOT, 'dist'),
     emptyOutDir: true,
     target: 'es2022',
-    sourcemap: true,
+    sourcemap: process.env.SOURCE_MAP === 'true',
     chunkSizeWarningLimit: 1500,
     rollupOptions: {
       input: { index: resolve(ROOT, 'src/renderer/index.html') },
       external: ['node:crypto', 'crypto', 'electron'],
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-router': ['react-router-dom'],
+          'vendor-i18n': ['i18next', 'react-i18next'],
+          'vendor-arco': ['@arco-design/web-react'],
+          'vendor-icons': ['@icon-park/react'],
+          'vendor-markdown': ['react-markdown', 'remark-gfm', 'remark-math', 'remark-breaks', 'rehype-raw', 'rehype-katex', 'rehype-sanitize'],
+          'vendor-katex': ['katex'],
+          'vendor-mermaid': ['mermaid'],
+          'vendor-wavedrom': ['wavedrom'],
+          'vendor-diff': ['diff2html'],
+          'vendor-syntax': ['react-syntax-highlighter'],
+          'vendor-codemirror': ['@uiw/react-codemirror', '@codemirror/language-data'],
+        },
+      },
     },
   },
   define: {

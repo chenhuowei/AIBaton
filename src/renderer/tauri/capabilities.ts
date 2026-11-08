@@ -28,6 +28,7 @@ type MaximizedListener = (payload: { is_maximized: boolean }) => void;
 const maximizedListeners = new Set<MaximizedListener>();
 let dragPathsReady = false;
 let unlistenDragDrop: UnlistenFn | null = null;
+let unlistenResized: UnlistenFn | null = null;
 
 /** Convert upstream's Electron-style options into Tauri dialog options. */
 function toTauriDialogOptions(options?: ShowOpenOptions) {
@@ -113,16 +114,23 @@ export function installDragDropPathBridge(): void {
 export function disposeTauriCapabilities(): void {
   unlistenDragDrop?.();
   unlistenDragDrop = null;
+  unlistenResized?.();
+  unlistenResized = null;
   maximizedListeners.clear();
 }
 
 /** Wire maximize-state events from the native window to bridge listeners. */
 export function installWindowStateBridge(): void {
+  if (unlistenResized) return;
+
   void win
     .onResized(() => {
       void win.isMaximized().then((is_maximized) => {
         for (const listener of maximizedListeners) listener({ is_maximized });
       });
+    })
+    .then((unlisten) => {
+      unlistenResized = unlisten ?? null;
     })
     .catch((error) => console.warn('[tauri] window resize listener unavailable:', error));
 }

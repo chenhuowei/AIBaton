@@ -572,8 +572,11 @@ const SystemModalContent: React.FC = () => {
           {/* Voice input (speech-to-text) settings */}
           <VoiceInputSection />
 
-          {/* In-app browser: sign-in state and cache */}
-          <BrowserDataSection />
+          {/* In-app browser: sign-in state and cache. Hidden in the Tauri
+              build — the Electron webview ('app.clear-browser-data') has no
+              Tauri counterpart, so the section's only actions are a broken
+              switch and a clear button that errors. */}
+          {false && <BrowserDataSection />}
 
           {/* Developer settings: DevTools + CDP (only visible in dev mode) */}
           <DevSettings />

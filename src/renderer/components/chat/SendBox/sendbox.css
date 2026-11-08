@@ -264,9 +264,10 @@ body[arco-theme='dark'] .sendbox-panel .send-button-custom--disabled svg * {
   }
 }
 
-/* Input placeholder color */
+/* Input placeholder colour follows the theme instead of a hardcoded light-mode gray. */
 ::placeholder {
-  color: #a1a2aa !important;
+  color: var(--text-secondary) !important;
+  opacity: 0.65;
 }
 
 /* Sendbox tools buttons - prevent layout jitter from theme hover transforms (#1075) */
@@ -586,8 +587,9 @@ body[arco-theme='dark'] .sendbox-panel .send-button-custom--disabled svg * {
 }
 
 .sendbox-highlight-textarea::placeholder {
-  color: #a1a2aa !important;
-  -webkit-text-fill-color: #a1a2aa !important;
+  color: var(--text-secondary) !important;
+  -webkit-text-fill-color: var(--text-secondary) !important;
+  opacity: 0.65;
 }
 
 /* Mobile compact: `+` launcher button replaces inline tools when the

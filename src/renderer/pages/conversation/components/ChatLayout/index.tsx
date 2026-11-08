@@ -243,7 +243,10 @@ const ChatLayout: React.FC<{
 
   return (
     <ArcoLayout
-      className='size-full color-black '
+      // Theme-aware foreground. The old `color-black` utility forced every
+      // inherited text node in the conversation (including CLI replies) to
+      // pure black, which is unreadable on the dark background.
+      className='size-full text-t-primary'
       style={{
         // fontFamily: `cursive,"anthropicSans","anthropicSans Fallback",system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif`,
       }}

@@ -44,7 +44,7 @@ AIBaton/
 ├── uno.config.ts            语义化设计 Token 与 UnoCSS 规则
 ├── .gitignore               排除依赖、构建产物、后端二进制与本地运行数据
 ├── LICENSE                  Apache-2.0
-└── THIRD-PARTY-NOTICES.md   上游组件、许可与 SHA256 记录
+└──
 ```
 
 ## 各部分作用

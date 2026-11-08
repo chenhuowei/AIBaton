@@ -29,3 +29,6 @@ src-tauri/binaries/managed-resources/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Build artifacts (installers copied from src-tauri/target/release/bundle)
+release/

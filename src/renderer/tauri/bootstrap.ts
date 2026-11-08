@@ -16,7 +16,11 @@ import { invoke, isTauri } from '@tauri-apps/api/core';
 
 import { setBackendBaseUrl } from '@/common/adapter/httpBridge';
 import { markBackendReady } from '@/common/adapter/endpointGate';
-import { installDragDropPathBridge, installWindowStateBridge } from './capabilities';
+import {
+  disposeTauriCapabilities,
+  installDragDropPathBridge,
+  installWindowStateBridge,
+} from './capabilities';
 import { installIpcStubs } from '@/common/adapter/ipcStub';
 
 type CoreEndpoint = {
@@ -55,14 +59,18 @@ function showFatal(message: string): void {
   if (!root) return;
   const esc = message.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   root.innerHTML =
-    '<div style="font-family:system-ui,sans-serif;padding:32px;line-height:1.6;color:#1d2129">' +
+    '<div style="font-family:system-ui,sans-serif;padding:32px;line-height:1.6;color:var(--text-primary);background:var(--bg-1);min-height:100%">' +
     '<h2 style="margin:0 0 12px">Aibaton 启动失败</h2>' +
-    `<pre style="white-space:pre-wrap;background:#f2f3f5;padding:16px;border-radius:8px">${esc}</pre>` +
+    `<pre style="white-space:pre-wrap;background:var(--bg-2);color:var(--text-primary);padding:16px;border-radius:8px">${esc}</pre>` +
     '<p>请检查 <code>src-tauri/binaries/</code> 下的 aioncore 与日志目录。</p></div>';
 }
 
-export async function bootstrapTauri(mount: () => void): Promise<void> {
+export async function bootstrapTauri(mount: () => void): Promise<() => void> {
   ensureDesktopMarkers();
+  // Install in both the Tauri webview and the static preview: both use the
+  // WebSocket-backed bridge adapter, so Electron-only channels need the local
+  // loopback in either case. Tauri-only calls inside the stubs are gated by
+  // `isTauri()`.
   installIpcStubs();
   installDragDropPathBridge();
   installWindowStateBridge();
@@ -73,7 +81,9 @@ export async function bootstrapTauri(mount: () => void): Promise<void> {
     markBackendReady('');
     mount();
     removeBootSplash();
-    return;
+    return () => {
+      disposeTauriCapabilities();
+    };
   }
 
   try {
@@ -87,9 +97,15 @@ export async function bootstrapTauri(mount: () => void): Promise<void> {
   } catch (error) {
     console.error('[tauri] failed to resolve aioncore endpoint:', error);
     showFatal(error instanceof Error ? error.message : String(error));
-    return;
+    return () => {
+      disposeTauriCapabilities();
+    };
   }
 
   mount();
   removeBootSplash();
+
+  return () => {
+    disposeTauriCapabilities();
+  };
 }

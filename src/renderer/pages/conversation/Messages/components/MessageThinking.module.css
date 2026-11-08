@@ -45,7 +45,10 @@
 }
 
 .body {
-  color: #86909c;
+  /* Thinking-chain text is intentionally muted but must still follow the
+     theme. The previous hardcoded light-mode gray was unreadable on the dark
+     thinking panel. */
+  color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.7;
   padding: 10px 14px;

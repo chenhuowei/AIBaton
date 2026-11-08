@@ -77,13 +77,13 @@ const ToolItemDetail: React.FC<{ item: NormalizedToolCall }> = ({ item }) => {
   return (
     <div className='flex flex-col'>
       {messageContext}
-      <div className='flex flex-row color-#86909C gap-12px items-center'>
+      <div className='flex flex-row text-t-secondary gap-12px items-center'>
         <Badge status={statusToBadge(item.status)} className={item.status === 'running' ? 'badge-breathing' : ''} />
         <span
           className={
             'flex-1 min-w-0' +
             (expanded ? ' break-all' : ' truncate') +
-            (hasDetail ? ' cursor-pointer hover:color-#4E5969' : '')
+            (hasDetail ? ' cursor-pointer hover:text-t-primary' : '')
           }
           onClick={hasDetail ? toggleExpanded : undefined}
         >
@@ -93,7 +93,7 @@ const ToolItemDetail: React.FC<{ item: NormalizedToolCall }> = ({ item }) => {
           )}
         </span>
         {hasDetail && (
-          <span className='flex-shrink-0 cursor-pointer hover:color-#4E5969 transition-colors' onClick={toggleExpanded}>
+          <span className='flex-shrink-0 cursor-pointer hover:text-t-primary transition-colors' onClick={toggleExpanded}>
             {expanded ? <IconDown style={{ fontSize: 12 }} /> : <IconRight style={{ fontSize: 12 }} />}
           </span>
         )}

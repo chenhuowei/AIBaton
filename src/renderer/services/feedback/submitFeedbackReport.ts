@@ -1,5 +1,6 @@
 import type { FeedbackDiagnosticsContextInput } from '@/common/types/feedbackDiagnostics';
 import { httpRequest } from '@/common/adapter/httpBridge';
+import { ipcBridge } from '@/common';
 
 const SUMMARY_PREVIEW_LENGTH = 60;
 const LOG_PREFIX = '[FeedbackReport]';
@@ -239,7 +240,6 @@ function buildSummary(moduleLabel: string, description: string): string {
 
 export async function submitFeedbackReport(input: SubmitFeedbackReportInput): Promise<void> {
   const attachments = [...(input.attachments ?? [])];
-  let eventId: string | undefined;
   let logAttachmentStatus: FeedbackLogAttachmentStatus = input.collectLogs ? 'empty' : 'skipped';
   let logAttachment: FeedbackAttachment | null = null;
   let dbDiagnosticsAttachmentStatus: FeedbackDbDiagnosticsAttachmentStatus = input.collectDbDiagnostics
@@ -269,58 +269,56 @@ export async function submitFeedbackReport(input: SubmitFeedbackReportInput): Pr
     const normalizedDescription = normalizeDescription(input.description);
     const eventSummary = buildSummary(input.moduleLabel, normalizedDescription);
     const contactEmail = input.contactEmail?.trim();
-    // Tauri build: @sentry/electron is Electron-only and not installed.
-    const Sentry = {
-      withScope: (cb: (scope: { setTag: (_k: string, _v: string) => void; setUser: (_u: unknown) => void }) => void) =>
-        cb({ setTag: () => undefined, setUser: () => undefined }),
-      captureEvent: (..._args: unknown[]) => undefined,
-      getClient: () => ({ flush: async (_ms?: number) => true }),
-    };
 
-    Sentry.withScope((scope) => {
-      scope.setTag('type', 'user-feedback');
-      scope.setTag('module', input.module);
-      // Attach the optional contact email to THIS feedback event only via the
-      // scoped user, so support can reach the reporter. Intentionally not a
-      // global Sentry.setUser — that would stick this address onto every later
-      // event (including crash reports the user never opted to share it on).
-      if (contactEmail) {
-        scope.setUser({ email: contactEmail });
-      }
-      Object.entries(input.tags ?? {}).forEach(([key, value]) => {
-        if (value.trim()) {
-          scope.setTag(key, value);
-        }
-      });
+    // Tauri build: @sentry/electron is unavailable, so reports are delivered
+    // as a pre-filled GitHub issue instead of a Sentry event. Screenshots and
+    // log attachments cannot travel through a URL, so they are left on the
+    // clipboard/临时目录 when present and the issue body tells the reporter
+    // how to attach them.
+    const issueTitle = encodeURIComponent(`[feedback] ${eventSummary}`);
+    const issueLines = [
+      '## Feedback',
+      '',
+      `**Module**: ${input.moduleLabel} (${input.module})`,
+      '',
+      '### Description',
+      '',
+      normalizedDescription,
+      '',
+      '### Environment',
+      '',
+      `- App: Aibaton ${(globalThis as { __APP_VERSION__?: string }).__APP_VERSION__ ?? 'unknown'} (Tauri desktop)`,
+      `- Platform: ${navigator.platform || 'unknown'}`,
+      `- Submitted at: ${new Date().toISOString()}`,
+      contactEmail ? `- Contact: ${contactEmail}` : null,
+      '',
+      input.tags && Object.keys(input.tags).length
+        ? `### Tags\n\n${Object.entries(input.tags)
+            .filter(([, v]) => String(v).trim())
+            .map(([k, v]) => `- ${k}: ${v}`)
+            .join('\n')}`
+        : null,
+      attachments.length
+        ? `### Attachments\n\n${attachments.length} attachment(s) were collected but cannot be sent through this link — please paste screenshots into the issue and attach log files manually.\`
+  (logs: ${logAttachmentStatus}, db diagnostics: ${dbDiagnosticsAttachmentStatus})\``
+        : null,
+    ].filter(Boolean);
+    const issueBody = encodeURIComponent(issueLines.join('\n'));
+    const repo = 'iOfficeAI/AionUi';
+    const issueUrl = `https://github.com/${repo}/issues/new?title=${issueTitle}&body=${issueBody.slice(0, 6000)}`;
 
-      eventId = Sentry.captureEvent(
-        {
-          level: 'info',
-          message: eventSummary,
-          extra: {
-            description: normalizedDescription,
-            ...input.extra,
-          },
-        },
-        { attachments }
-      );
-    });
-
-    if (input.flushTimeoutMs !== undefined) {
-      const client = Sentry.getClient();
-      if (!client) {
-        throw new Error(`Failed to flush feedback report${eventId ? ` (${eventId})` : ''}: Sentry is not initialized`);
-      }
-
-      const flushed = await client.flush(input.flushTimeoutMs);
-      if (!flushed) {
-        throw new Error(`Failed to flush feedback report${eventId ? ` (${eventId})` : ''}`);
-      }
+    try {
+      await ipcBridge.shell.openExternal.invoke(issueUrl);
+    } catch (err) {
+      throw new Error(`Failed to open the browser for the feedback issue: ${String(err)}`);
     }
+    // Copy the description so the reporter can paste it into the issue even
+    // if the pre-fill was truncated by the URL length limit.
+    void navigator.clipboard?.writeText(`${eventSummary}\n\n${normalizedDescription}`).catch(() => undefined);
 
     logFeedbackReport('info', 'submitted', {
       module: input.module,
-      eventId,
+      issueUrl,
       collectLogs: Boolean(input.collectLogs),
       logAttachment: summarizeLogAttachment(logAttachmentStatus, logAttachment),
       dbDiagnosticsAttachment: summarizeDbDiagnosticsAttachment(dbDiagnosticsAttachmentStatus, dbDiagnosticsAttachment),
@@ -332,7 +330,6 @@ export async function submitFeedbackReport(input: SubmitFeedbackReportInput): Pr
   } catch (error) {
     logFeedbackReport('error', 'failed', {
       module: input.module,
-      eventId,
       collectLogs: Boolean(input.collectLogs),
       logAttachment: summarizeLogAttachment(logAttachmentStatus, logAttachment),
       dbDiagnosticsAttachment: summarizeDbDiagnosticsAttachment(dbDiagnosticsAttachmentStatus, dbDiagnosticsAttachment),

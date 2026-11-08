@@ -457,22 +457,26 @@ const BackendStartupFailureDialog: React.FC<{ failure: BackendStartupFailureInfo
 const root = createRoot(document.getElementById('root')!);
 void bootstrapTauri(() =>
   root.render(
-  <BackendStartupGate
-    renderStarting={() => (
-      <Config>
-        <BackendStartingView />
-      </Config>
-    )}
-    renderFailure={(failure) => (
-      <Config>
-        <BackendStartupFailureDialog failure={failure} />
-      </Config>
-    )}
-    renderApp={() => (
-      <AppProviders>
-        <App />
-      </AppProviders>
-    )}
-  />
-)
-);
+    <BackendStartupGate
+      renderStarting={() => (
+        <Config>
+          <BackendStartingView />
+        </Config>
+      )}
+      renderFailure={(failure) => (
+        <Config>
+          <BackendStartupFailureDialog failure={failure} />
+        </Config>
+      )}
+      renderApp={() => (
+        <AppProviders>
+          <App />
+        </AppProviders>
+      )}
+    />
+  )
+).then((dispose) => {
+  if (dispose) {
+    window.addEventListener('beforeunload', dispose, { once: true });
+  }
+});

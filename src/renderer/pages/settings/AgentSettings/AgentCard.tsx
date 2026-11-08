@@ -26,6 +26,10 @@ type AgentCardProps =
       onTestConnection: () => void;
       onConfigure: () => void;
       isTesting?: boolean;
+      /** Enable/disable the agent. Disabled built-ins skip the startup CLI
+       * probe entirely (the main lever for backend boot time), so this must
+       * stay available on official cards, not just custom ones. */
+      onToggle: (enabled: boolean) => void;
     }
   | {
       type: 'custom';
@@ -211,6 +215,15 @@ const AgentCard: React.FC<AgentCardProps> = (props) => {
               className='!h-30px !rounded-8px !border-danger-2 !bg-base'
             />
           </>
+        ) : null}
+        {/* Official agents: enable/disable only. The backend skips the startup
+            CLI probe for disabled rows, so this switch is the direct lever on
+            backend boot time — hidden behind a tooltip because the effect only
+            shows on the next launch. */}
+        {props.type === 'official' ? (
+          <Tooltip content={t('settings.agentManagement.toggleOfficialHint', { defaultValue: 'Disabled agents are skipped during startup (faster launch). Takes effect after restart.' })}>
+            <Switch size='small' checked={agent.enabled !== false} onChange={props.onToggle} />
+          </Tooltip>
         ) : null}
       </div>
     </div>

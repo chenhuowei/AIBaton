@@ -21,6 +21,7 @@ import { ipcBridge } from '@/common';
 import SiderItem from './SiderItem';
 import type { SiderMenuItem } from './SiderItem';
 import { useSiderTeamRunning } from './useSiderTeamRunning';
+import { safeStorageGet, safeStorageSet } from '@renderer/utils/storage';
 
 const TEAM_PINNED_KEY = 'team-pinned-ids';
 
@@ -47,23 +48,21 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
   const { mutate: globalMutate } = useSWRConfig();
 
   const [createTeamVisible, setCreateTeamVisible] = useState(false);
-  const [expanded, setExpanded] = useState<boolean>(() => localStorage.getItem('team-section-expanded') === 'true');
+  const [expanded, setExpanded] = useState<boolean>(
+    () => localStorage.getItem('team-section-expanded') === 'true'
+  );
   useEffect(() => {
-    localStorage.setItem('team-section-expanded', String(expanded));
+    safeStorageSet('team-section-expanded', expanded);
   }, [expanded]);
 
-  const [pinnedIds, setPinnedIds] = useState<string[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(TEAM_PINNED_KEY) ?? '[]') as string[];
-    } catch {
-      return [];
-    }
-  });
+  const [pinnedIds, setPinnedIds] = useState<string[]>(() =>
+    safeStorageGet<string[]>(TEAM_PINNED_KEY, [])
+  );
 
   const togglePin = useCallback((id: string) => {
     setPinnedIds((prev) => {
       const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
-      localStorage.setItem(TEAM_PINNED_KEY, JSON.stringify(next));
+      safeStorageSet(TEAM_PINNED_KEY, next);
       return next;
     });
   }, []);

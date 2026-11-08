@@ -114,6 +114,11 @@ const LocalAgents: React.FC = () => {
     [refreshCatalog]
   );
 
+  // Same endpoint as custom agents — the backend PATCH works for built-ins
+  // too. Disabled built-ins skip the startup CLI probe, which is the main
+  // lever on backend boot time when many registry CLIs are not installed.
+  const handleToggleOfficialAgent = handleToggleCustomAgent;
+
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const matchesAgentSearch = useCallback(
     (agent: ManagedAgent) => {
@@ -280,6 +285,7 @@ const LocalAgents: React.FC = () => {
               onTestConnection={() => void handleTestConnection(agent.id)}
               onConfigure={() => openAgentConfig(agent.id)}
               isTesting={testingAgentId === agent.id}
+              onToggle={(enabled) => void handleToggleOfficialAgent(agent.id, enabled)}
             />
           ))}
           {visibleOfficialAgents.length === 0 && (

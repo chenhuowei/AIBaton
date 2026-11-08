@@ -478,6 +478,291 @@ patch(
 
 // 2k. [Audit F] i18n rebrand runs in scripts/rebrand.mjs after this script.
 
+// 2l. Dark-mode text colour fixes. Upstream relies on Electron's preload
+//     setting a root text colour; the Tauri/WebView build has no preload, and
+//     UnoCSS's `color: inherit` preflight leaves `html/body` at the browser
+//     initial black. Every unstyled text node (CLI terminal output included)
+//     then renders black-on-black in dark mode. These patches are re-applied on
+//     every sync because step 1 replaces all of src/ from upstream.
+patch(
+  'renderer/styles/arco-override.css',
+  (s) =>
+    s
+      .replace(
+        'html,\nbody {\n  /* Global ("app") region font.',
+        [
+          'html,',
+          'body {',
+          '  /* Root text colour must follow the theme. UnoCSS sets `color: inherit`',
+          '     on every element; without this, dark mode inherits initial black. */',
+          '  color: var(--text-primary);',
+          '  /* Global ("app") region font.',
+        ].join('\n')
+      )
+      .replace(
+        /\.arco-btn \{\n  &\.arco-btn-outline \{\n    border-color: #86909c;\n    color: #86909c;\n  \}\n\}/,
+        [
+          '.arco-btn {',
+          '  &.arco-btn-outline {',
+          '    border-color: var(--text-secondary);',
+          '    color: var(--text-secondary);',
+          '  }',
+          '}',
+        ].join('\n')
+      )
+      .replace(
+        '  background-color: #e8f3ff !important;\n  border-color: #e8f3ff !important;',
+        '  background-color: var(--brand-light) !important;\n  border-color: var(--brand-light) !important;'
+      ),
+  'dark-mode root text colour + theme-aware Arco overrides'
+);
+
+patch(
+  'renderer/styles/themes/default-color-scheme.css',
+  (s) =>
+    s
+      .replace(
+        '  --text-0: #000000; /* 纯黑文字色 */',
+        '  --text-0: var(--text-primary); /* 跟随主题主文字色 */'
+      )
+      .replace(
+        '  --text-0: #ffffff; /* 纯黑文字色（暗色模式下为白色） */',
+        '  --text-0: var(--text-primary); /* 跟随主题主文字色 */'
+      ),
+  'theme-aware legacy text-0 token'
+);
+
+patch(
+  'renderer/pages/conversation/Messages/components/MessageThinking.module.css',
+  (s) => s.replace('.body {\n  color: #86909c;', '.body {\n  color: var(--text-secondary);'),
+  'theme-aware thinking-chain text'
+);
+
+for (const rel of [
+  'renderer/pages/conversation/Messages/components/MessageToolCall.tsx',
+  'renderer/pages/conversation/Messages/components/MessageToolGroupSummary.tsx',
+]) {
+  patch(
+    rel,
+    (s) =>
+      s
+        .replaceAll("color-#86909C gap-12px", "text-t-secondary gap-12px")
+        .replaceAll("hover:color-#4E5969", "hover:text-t-primary"),
+    'theme-aware tool-call/meta text colours'
+  );
+}
+
+patch(
+  'renderer/pages/conversation/components/ChatLayout/index.tsx',
+  (s) => s.replace('className=\'size-full color-black \'', 'className=\'size-full text-t-primary\''),
+  'theme-aware chat layout foreground (dark-mode CLI replies)'
+);
+
+patch(
+  'renderer/pages/conversation/components/ChatLayout/index.tsx',
+  (s) => s.replace('className=\'size-full color-black \'', 'className=\'size-full text-t-primary\''),
+  'theme-aware chat layout foreground (dark-mode CLI replies)'
+);
+
+// 2m. Agent settings: expose the enable/disable switch for BUILTIN agents.
+//     The upstream UI renders the Switch only for custom agents ("controls
+//     that have no meaning for built-ins"), but the backend PATCH
+//     /api/agents/:id/enabled works for built-ins too, and disabled built-ins
+//     skip the startup CLI probe — the main lever on backend boot time when
+//     many npx-bridge registry CLIs are not installed.
+patch(
+  'renderer/pages/settings/AgentSettings/AgentCard.tsx',
+  (s) =>
+    s
+      // 1. official prop variant gains onToggle
+      .replace(
+        [
+          'type: \'official\';',
+          '      agent: ManagedAgent;',
+          '      boundAssistants: Assistant[];',
+          '      onTestConnection: () => void;',
+          '      onConfigure: () => void;',
+          '      isTesting?: boolean;',
+        ].join('\n'),
+        [
+          'type: \'official\';',
+          '      agent: ManagedAgent;',
+          '      boundAssistants: Assistant[];',
+          '      onTestConnection: () => void;',
+          '      onConfigure: () => void;',
+          '      isTesting?: boolean;',
+          '      /** Enable/disable the agent. Disabled built-ins skip the startup CLI',
+          '       * probe entirely (the main lever for backend boot time). */',
+          '      onToggle: (enabled: boolean) => void;',
+        ].join('\n')
+      )
+      // 2. official card renders the switch after the custom-only block
+      .replace(
+        '        ) : null}\n      </div>\n    </div>\n  );\n};\n\nexport default AgentCard;',
+        [
+          '        ) : null}',
+          '        {/* Official agents: enable/disable only. Disabled built-ins skip the',
+          '            startup CLI probe, so this switch is the direct lever on backend',
+          '            boot time — the effect shows on the next launch. */}',
+          '        {props.type === \'official\' ? (',
+          '          <Tooltip content={t(\'settings.agentManagement.toggleOfficialHint\', { defaultValue: \'Disabled agents are skipped during startup (faster launch). Takes effect after restart.\' })}}>',
+          '            <Switch size=\'small\' checked={agent.enabled !== false} onChange={props.onToggle} />',
+          '          </Tooltip>',
+          '        ) : null}',
+          '      </div>',
+          '    </div>',
+          '  );',
+          '};',
+          '',
+          'export default AgentCard;',
+        ].join('\n')
+      ),
+  'builtin agent enable/disable switch'
+);
+
+patch(
+  'renderer/pages/settings/AgentSettings/LocalAgents.tsx',
+  (s) =>
+    s
+      // reuse the custom toggle handler for official cards
+      .replace(
+        /  const handleToggleCustomAgent = useCallback\(\n([\s\S]*?)\n  \);\n/,
+        [
+          '  const handleToggleCustomAgent = useCallback(',
+          '$1',
+          '  );',
+          '',
+          '  // Same endpoint as custom agents — the backend PATCH works for built-ins',
+          '  // too. Disabled built-ins skip the startup CLI probe, which is the main',
+          '  // lever on backend boot time when many registry CLIs are not installed.',
+          '  const handleToggleOfficialAgent = handleToggleCustomAgent;',
+          '',
+        ].join('\n')
+      )
+      // official AgentCard gets onToggle
+      .replace(
+        [
+          '              onTestConnection={() => void handleTestConnection(agent.id)}',
+          '              onConfigure={() => openAgentConfig(agent.id)}',
+          '              isTesting={testingAgentId === agent.id}',
+        ].join('\n'),
+        [
+          '              onTestConnection={() => void handleTestConnection(agent.id)}',
+          '              onConfigure={() => openAgentConfig(agent.id)}',
+          '              isTesting={testingAgentId === agent.id}',
+          '              onToggle={(enabled) => void handleToggleOfficialAgent(agent.id, enabled)}',
+        ].join('\n')
+      ),
+  'wire builtin agent toggle in agent management list'
+);
+
+patch(
+  'renderer/components/chat/SendBox/sendbox.css',
+  (s) =>
+    s
+      .replace(
+        '/* Input placeholder color */\n::placeholder {\n  color: #a1a2aa !important;\n}',
+        '/* Input placeholder colour follows the theme. */\n::placeholder {\n  color: var(--text-secondary) !important;\n  opacity: 0.65;\n}'
+      )
+      .replace(
+        '.sendbox-highlight-textarea::placeholder {\n  color: #a1a2aa !important;\n  -webkit-text-fill-color: #a1a2aa !important;\n}',
+        '.sendbox-highlight-textarea::placeholder {\n  color: var(--text-secondary) !important;\n  -webkit-text-fill-color: var(--text-secondary) !important;\n  opacity: 0.65;\n}'
+      ),
+  'theme-aware sendbox placeholder colours'
+);
+
+patch(
+  'renderer/pages/conversation/Messages/components/MessageToolGroupSummary.css',
+  (s) =>
+    s
+      .replaceAll('color: var(--color-text-3, #86909c);', 'color: var(--text-secondary);')
+      .replace('color: var(--color-text-2, #4e5969);', 'color: var(--text-primary);')
+      .replace('background: var(--color-fill-1, #f7f8fa);', 'background: var(--bg-2);'),
+  'theme-aware tool detail colours'
+);
+
+patch(
+  'renderer/services/bootstrapRenderer.ts',
+  (s) =>
+    s
+      .replace(
+        "import { configService } from '@/common/config/configService';\n",
+        "import { configService } from '@/common/config/configService';\nimport { httpRequest } from '@/common/adapter/httpBridge';\n"
+      )
+      .replace(
+        /(export async function bootstrapRendererConfig\(logError: BootstrapLogger = console\.error\): Promise<void> \{\n  await configService\.initialize\(\)\.catch\(\(err\) => \{\n    logError\('Failed to initialize config:', err\);\n  \}\);\n)/,
+        [
+          '$1',
+          '  await syncCloseToTrayToShell();',
+          '  await applyDefaultAgentCatalog();',
+        ].join('\n'),
+      )
+      // Append helpers before the bootstrap function.
+      .replace(
+        /(\/\*\*\n \* Wait for renderer config initialization)/,
+        [
+          '/** Close-to-tray + default agent catalog bootstrap helpers. */',
+          'const DEFAULT_AGENTS_FLAG = \'agents.defaultCatalogApplied\';',
+          'const DEFAULT_ENABLED_AGENTS = [\'claude\', \'codex\', \'pi\'];',
+          '',
+          'async function syncCloseToTrayToShell(): Promise<void> {',
+          '  if (!isTauri()) return;',
+          '  try {',
+          '    const stored = configService.get(\'system.closeToTray\');',
+          '    await ipcBridge.systemSettings.setCloseToTray.invoke({ enabled: stored === true });',
+          '  } catch (err) {',
+          '    console.warn(\'[bootstrap] close-to-tray sync failed:\', err);',
+          '  }',
+          '}',
+          '',
+          '/** One-shot default agent catalog: enable claude/codex/pi, disable the',
+          ' * rest of the builtin list. npx-bridge startup probes dominated backend',
+          ' * boot time; the flag keeps later user choices intact. */',
+          'async function applyDefaultAgentCatalog(): Promise<void> {',
+          '  try {',
+          '    const bag = await httpRequest<Record<string, unknown>>(\'GET\', \'/api/settings/client\');',
+          '    if (bag?.[DEFAULT_AGENTS_FLAG]) return;',
+          '    const agents = await ipcBridge.acpConversation.getManagedAgents.invoke();',
+          '    await Promise.all(',
+          '      agents',
+          '        .filter((a) => a.agent_source === \'builtin\')',
+          '        .map((a) =>',
+          '          ipcBridge.acpConversation.setAgentEnabled',
+          '            .invoke({ id: a.id, enabled: DEFAULT_ENABLED_AGENTS.includes(a.backend ?? \'\') })',
+          '            .catch(() => undefined)',
+          '        ),',
+          '    );',
+          '    await httpRequest<void>(\'PUT\', \'/api/settings/client\', { [DEFAULT_AGENTS_FLAG]: true });',
+          '  } catch (err) {',
+          '    console.warn(\'[bootstrap] default agent catalog failed:\', err);',
+          '  }',
+          '}',
+          '',
+          '$1',
+        ].join('\n'),
+      )
+      .replace(
+        "import { configService } from '@/common/config/configService';\nimport { httpRequest } from '@/common/adapter/httpBridge';\n",
+        "import { configService } from '@/common/config/configService';\nimport { httpRequest } from '@/common/adapter/httpBridge';\nimport { ipcBridge } from '@/common';\nimport { isTauri } from '@tauri-apps/api/core';\n"
+      ),
+  'close-to-tray shell sync + one-shot default agent catalog at bootstrap'
+);
+
+patch(
+  'renderer/components/settings/SettingsModal/contents/SystemModalContent/index.tsx',
+  (s) =>
+    s.replace(
+      '          {/* In-app browser: sign-in state and cache */}\n          <BrowserDataSection />',
+      [
+        '          {/* In-app browser: hidden in the Tauri build — the Electron',
+        '              webview (clear-browser-data) has no Tauri counterpart, so the',
+        '              section only offers a broken switch and an erroring button. */}',
+        '          {false && <BrowserDataSection />}',
+      ].join('\n'),
+    ),
+  'hide in-app browser data section (no Tauri webview)'
+);
+
 // 3. Overlay Tauri-specific files.
 const OVERLAYS = join(ROOT, 'overlays');
 if (existsSync(OVERLAYS)) {
